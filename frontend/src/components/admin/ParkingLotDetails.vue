@@ -11,7 +11,7 @@
     <div v-if="parkingLot">
       <p><strong>Address:</strong> {{ parkingLot.address }}</p>
       <p><strong>Pincode:</strong> {{ parkingLot.pincode }}</p>
-      <p><strong>Price per Hour:</strong> ${{ parkingLot.price }}</p>
+      <p><strong>Price per Hour:</strong> ₹{{ parkingLot.price }}</p>
       <p><strong>Total Spots:</strong> {{ parkingLot.number_of_spots }}</p>
     </div>
     <div v-else>

@@ -109,25 +109,83 @@
 
       <!-- Summary Tab -->
       <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
-        <h2 class="mt-4">My Parking Summary</h2>
-        <div v-if="summaryData">
-          <p><strong>Total Bookings:</strong> {{ summaryData.total_bookings }}</p>
-          <p>
-            <strong>Total Amount Spent:</strong>
-            {{
-              summaryData.total_amount_spent ? summaryData.total_amount_spent.toFixed(2) : '0.00'
-            }}
-          </p>
-          <p>
-            <strong>Most Used Parking Lot:</strong> {{ summaryData.most_used_parking_lot || 'N/A' }}
-          </p>
-
-          <div class="chart-container mt-4">
-            <h4 class="mb-3">Parking Activity Summary</h4>
-            <Bar v-if="userSummaryChartData" :data="userSummaryChartData" :options="chartOptions" />
+        <h2 class="mt-4 mb-4">My Parking Summary</h2>
+        
+        <div v-if="summaryData" class="row g-4">
+          <!-- Stats Cards -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card bg-primary text-white h-100">
+              <div class="card-body">
+                <h5 class="card-title">Current Booking</h5>
+                <h2 class="display-5">{{ summaryData.current_booking ? 'Active' : 'None' }}</h2>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg-4">
+            <div class="card bg-info text-white h-100">
+              <div class="card-body">
+                <h5 class="card-title">Total Amount Spent</h5>
+                <h2 class="display-5">₹{{ (summaryData.total_amount_spent || 0).toFixed(2) }}</h2>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg-4">
+            <div class="card bg-success text-white h-100">
+              <div class="card-body">
+                <h5 class="card-title">Total Hours Parked</h5>
+                <h2 class="display-5">{{ summaryData.total_hours_parked || 0 }}</h2>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Detailed Stats -->
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title mb-4">Parking Statistics</h5>
+                <div class="list-group list-group-flush">
+                  <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>Total Hours Parked</span>
+                    <span class="badge bg-primary rounded-pill">{{ summaryData.total_hours_parked || 0 }} hrs</span>
+                  </div>
+                  <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>Average Booking Duration</span>
+                    <span class="badge bg-success rounded-pill">{{ summaryData.average_booking_duration || 0 }} hrs</span>
+                  </div>
+                  <div class="list-group-item">
+                    <div class="fw-bold">Favorite Parking Lot</div>
+                    <div class="text-muted">{{ summaryData.favorite_parking_lot || 'No parking history' }}</div>
+                  </div>
+                  <div v-if="summaryData.last_booking" class="list-group-item">
+                    <div class="fw-bold">Last Booking</div>
+                    <div class="text-muted">{{ new Date(summaryData.last_booking).toLocaleString() }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Chart -->
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title mb-4">Booking Overview</h5>
+                <div style="height: 250px;">
+                  <Bar v-if="userSummaryChartData" :data="userSummaryChartData" :options="chartOptions" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <p v-else>Loading summary data...</p>
+        
+        <div v-else class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3">Loading summary data...</p>
+        </div>
       </div>
 
       <!-- Export Data Tab -->
@@ -173,24 +231,41 @@ export default {
       chartOptions: {
         responsive: true,
         maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
       },
     }
   },
   computed: {
     userSummaryChartData() {
-      if (!this.summaryData) {
-        return null
-      }
+      if (!this.summaryData) return null;
+      
       return {
-        labels: ['Total Bookings', 'Total Amount Spent'],
+        labels: ['Total Hours Parked', 'Avg. Duration'],
         datasets: [
           {
-            label: 'Value',
-            backgroundColor: ['#007bff', '#28a745'],
-            data: [this.summaryData.total_bookings, this.summaryData.total_amount_spent],
-          },
-        ],
-      }
+            label: 'Hours',
+            backgroundColor: ['#4e73df', '#1cc88a'],
+            data: [
+              this.summaryData.total_hours_parked || 0,
+              this.summaryData.average_booking_duration || 0
+            ],
+            borderWidth: 1
+          }
+        ]
+      };
     },
 
     isReserved() {
@@ -269,7 +344,7 @@ export default {
     async releaseParkingSpot(reservationId) {
       try {
         const response = await apiClient.post(`/user/reservations/${reservationId}/release`)
-        alert(response.data.message + `\nParking Cost: ${response.data.parking_cost.toFixed(2)}`)
+        alert(response.data.message + `\nParking Cost: ₹${response.data.parking_cost.toFixed(2)}`)
 
         this.$router.push({
           name: 'payment',

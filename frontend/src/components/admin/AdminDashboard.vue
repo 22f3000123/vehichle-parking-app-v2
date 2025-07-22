@@ -32,7 +32,7 @@
                 <p class="card-text mb-1"><strong>Address:</strong> {{ lot.address }}</p>
                 <p class="card-text mb-1"><strong>Pincode:</strong> {{ lot.pincode }}</p>
                 <p class="card-text mb-1"><strong>Spots:</strong> {{ lot.number_of_spots }}</p>
-                <p class="card-text mb-3"><strong>Price:</strong> ${{ lot.price }}</p>
+                <p class="card-text mb-3"><strong>Price:</strong> ₹{{ lot.price }}</p>
                 <div class="mt-auto">
                   <button class="btn btn-sm btn-info me-2" @click="editParkingLot(lot)">Edit</button>
                   <button class="btn btn-sm btn-danger" @click="deleteParkingLot(lot.id)">Delete</button>
@@ -107,31 +107,162 @@
 
       <!-- Summary Tab -->
       <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
-        <h2 class="mt-4">Summary Charts</h2>
-        <div v-if="summaryData">
-          <p><strong>Total Parking Lots:</strong> {{ summaryData.total_parking_lots }}</p>
-          <p><strong>Total Spots:</strong> {{ summaryData.total_spots }}</p>
-          <p><strong>Available Spots:</strong> {{ summaryData.available_spots }}</p>
-          <p><strong>Occupied Spots:</strong> {{ summaryData.occupied_spots }}</p>
-          <p><strong>Total Reservations:</strong> {{ summaryData.total_reservations }}</p>
-
-          <h3 class="mt-4">Parking Lot Occupancy Breakdown</h3>
-          <ul class="list-group">
-            <li class="list-group-item" v-for="lot in summaryData.parking_lot_occupancy" :key="lot.lot_id">
-              <strong>{{ lot.lot_name }} (ID: {{ lot.lot_id }})</strong>: Total Spots: {{ lot.total_spots }}, Occupied: {{ lot.occupied_spots }}, Available: {{ lot.available_spots }}
-            </li>
-          </ul>
-
-          <div class="chart-container mt-4">
-            <h4 class="mb-3">Parking Lot Occupancy Chart</h4>
-            <Bar
-              v-if="parkingLotOccupancyChartData"
-              :data="parkingLotOccupancyChartData"
-              :options="chartOptions"
-            />
+        <div class="container-fluid mt-4">
+          <h2>Parking Analytics Dashboard</h2>
+          
+          <div v-if="summaryData" class="row g-4">
+            <!-- Stats Cards -->
+            <div class="col-md-3">
+              <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Total Parking Lots</h5>
+                  <h2 class="display-4">{{ summaryData.total_parking_lots }}</h2>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-3">
+              <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Available Spots</h5>
+                  <h2 class="display-4">{{ summaryData.available_spots }}</h2>
+                  <p class="mb-0">out of {{ summaryData.total_spots }} total</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-3">
+              <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Occupied Spots</h5>
+                  <h2 class="display-4">{{ summaryData.occupied_spots }}</h2>
+                  <p class="mb-0">{{ summaryData.total_spots > 0 ? Math.round((summaryData.occupied_spots / summaryData.total_spots) * 100) : 0 }}% occupancy</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-3">
+              <div class="card text-white bg-info h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Total Revenue</h5>
+                  <h2 class="display-4">₹{{ summaryData.total_revenue }}</h2>
+                  <p class="mb-0">from {{ summaryData.total_reservations }} reservations</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Main Charts Row -->
+            <div class="col-md-8">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Daily Reservations</h5>
+                  <div style="height: 300px;">
+                    <Line
+                      v-if="dailyReservationsChartData"
+                      :data="dailyReservationsChartData"
+                      :options="lineChartOptions"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Reservation Status</h5>
+                  <div style="height: 300px;">
+                    <Pie
+                      v-if="reservationStatusChartData"
+                      :data="reservationStatusChartData"
+                      :options="chartOptions"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Additional Stats -->
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Reservation Trends</h5>
+                  <div class="row text-center mt-3">
+                    <div class="col-6">
+                      <div class="p-3 bg-light rounded">
+                        <h3 class="text-primary">{{ summaryData.average_duration_hours }} <small class="h6">hours</small></h3>
+                        <p class="text-muted mb-0">Avg. Duration</p>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="p-3 bg-light rounded">
+                        <h3 class="text-primary">₹{{ summaryData.total_revenue }}</h3>
+                        <p class="text-muted mb-0">Total Revenue</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">Spot Distribution</h5>
+                  <div style="height: 300px;">
+                    <Pie
+                      v-if="spotDistributionChartData"
+                      :data="spotDistributionChartData"
+                      :options="{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'top',
+                          },
+                          title: {
+                            display: true,
+                            text: 'Spot Distribution'
+                          }
+                        }
+                      }"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Stats Summary -->
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Key Metrics</h5>
+                  <div class="row text-center">
+                    <div class="col-md-4">
+                      <h3>{{ summaryData.average_duration_hours }} hrs</h3>
+                      <p class="text-muted">Avg. Reservation Duration</p>
+                    </div>
+                    <div class="col-md-4">
+                      <h3>{{ summaryData.reservation_status.active }}</h3>
+                      <p class="text-muted">Active Reservations</p>
+                    </div>
+                    <div class="col-md-4">
+                      <h3>{{ summaryData.reservation_status.completed }}</h3>
+                      <p class="text-muted">Completed Reservations</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading dashboard data...</p>
           </div>
         </div>
-        <p v-else>Loading summary data...</p>
       </div>
     </div>
 
@@ -179,14 +310,18 @@
 <script>
 import apiClient from '../../services/api';
 import { useAuthStore } from '../../stores/auth';
-import { Bar } from 'vue-chartjs';
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
+import { Bar, Pie, Line } from 'vue-chartjs';
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement } from 'chart.js';
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
+ChartJS.register(
+  Title, Tooltip, Legend, 
+  BarElement, CategoryScale, LinearScale,
+  ArcElement, PointElement, LineElement
+);
 
 export default {
   name: 'AdminDashboard',
-  components: { Bar },
+  components: { Bar, Pie, Line },
   data() {
     return {
       authStore: useAuthStore(),
@@ -197,6 +332,47 @@ export default {
       showCreateLotModal: false,
       showEditLotModal: false,
       isEditMode: false,
+      chartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Parking Statistics'
+          }
+        }
+      },
+      lineChartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Daily Reservations Trend'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Number of Reservations'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Date'
+            }
+          }
+        }
+      },
       currentLot: {
         id: null,
         name: '',
@@ -212,26 +388,101 @@ export default {
     };
   },
   computed: {
-    parkingLotOccupancyChartData() {
-      if (!this.summaryData || !this.summaryData.parking_lot_occupancy) {
-        return null;
-      }
-      const labels = this.summaryData.parking_lot_occupancy.map(lot => lot.lot_name);
-      const occupiedData = this.summaryData.parking_lot_occupancy.map(lot => lot.occupied_spots);
-      const availableData = this.summaryData.parking_lot_occupancy.map(lot => lot.available_spots);
-
+    dailyReservationsChartData() {
+      if (!this.summaryData || !this.summaryData.daily_reservations) return null;
+      
+      // Sort by date
+      const sortedData = [...this.summaryData.daily_reservations].sort((a, b) => 
+        new Date(a.date) - new Date(b.date)
+      );
+      
+      const labels = sortedData.map(day => {
+        const date = new Date(day.date);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      });
+      
+      const reservationData = sortedData.map(day => day.count);
+      
       return {
         labels: labels,
         datasets: [
           {
-            label: 'Occupied Spots',
-            backgroundColor: '#dc3545',
-            data: occupiedData
-          },
+            label: 'Reservations',
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgb(54, 162, 235)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgb(54, 162, 235)',
+            pointBorderColor: '#fff',
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(54, 162, 235)',
+            data: reservationData
+          }
+        ]
+      };
+    },
+    
+    reservationStatusChartData() {
+      if (!this.summaryData) return null;
+      
+      const active = this.summaryData.reservation_status?.active || 0;
+      const completed = this.summaryData.reservation_status?.completed || 0;
+      
+      return {
+        labels: ['Active Reservations', 'Completed Reservations'],
+        datasets: [
           {
-            label: 'Available Spots',
-            backgroundColor: '#28a745',
-            data: availableData
+            backgroundColor: ['#ff9800', '#4caf50'],
+            data: [active, completed],
+            borderWidth: 1
+          }
+        ]
+      };
+    },
+    
+    spotDistributionChartData() {
+      if (!this.summaryData) return null;
+      
+      const available = this.summaryData.available_spots || 0;
+      const occupied = this.summaryData.occupied_spots || 0;
+      
+      return {
+        labels: ['Available Spots', 'Occupied Spots'],
+        datasets: [
+          {
+            backgroundColor: ['#4caf50', '#ff9800'],
+            data: [available, occupied],
+            borderWidth: 1,
+            hoverOffset: 10
+          }
+        ]
+      };
+    },
+    
+    reservationTrendsData() {
+      if (!this.summaryData) return null;
+      
+      return {
+        labels: ['Reservations', 'Revenue', 'Duration'],
+        datasets: [
+          {
+            label: 'Metrics',
+            data: [
+              this.summaryData.total_reservations,
+              this.summaryData.total_revenue,
+              this.summaryData.average_duration_hours * 10 // Scale for better visualization
+            ],
+            backgroundColor: [
+              'rgba(54, 162, 235, 0.5)',
+              'rgba(75, 192, 192, 0.5)',
+              'rgba(255, 159, 64, 0.5)'
+            ],
+            borderColor: [
+              'rgb(54, 162, 235)',
+              'rgb(75, 192, 192)',
+              'rgb(255, 159, 64)'
+            ],
+            borderWidth: 1
           }
         ]
       };
@@ -334,7 +585,6 @@ export default {
 </script>
 
 <style scoped>
-/* Add any specific styles for the admin dashboard here */
 .modal.show {
   display: block;
 }
@@ -343,7 +593,7 @@ export default {
 }
 .chart-container {
   position: relative;
-  height: 400px; /* Adjust height as needed */
+  height: 400px;
   width: 100%;
 }
 </style>
