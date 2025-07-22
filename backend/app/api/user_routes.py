@@ -160,32 +160,58 @@ def get_user_reservations():
 @user_bp.route("/summary-charts", methods=["GET"])
 @auth_required()
 def get_user_summary_charts_data():
+    # Get user's reservations
     user_reservations = Reservation.query.filter_by(user_id=current_user.id).all()
+    
+    # Separate active and completed reservations
+    completed_reservations = [r for r in user_reservations if r.leaving_timestamp is not None]
+    active_reservations = [r for r in user_reservations if r.leaving_timestamp is None]
+    
+    # Calculate basic stats
     total_bookings = len(user_reservations)
-    total_amount_spent = sum(
-        res.parking_cost for res in user_reservations if res.parking_cost is not None
+    total_amount_spent = sum(r.parking_cost or 0 for r in completed_reservations)
+    total_hours_parked = sum(
+        (r.leaving_timestamp - r.parking_timestamp).total_seconds() / 3600 
+        for r in completed_reservations
     )
-
-    # Most used parking lot
+    
+    # Get parking lot info for most used lot
+    lot_usage = {}
+    for res in user_reservations:
+        spot = ParkingSpot.query.get(res.spot_id)
+        if spot:
+            lot_id = spot.lot_id
+            lot_usage[lot_id] = lot_usage.get(lot_id, 0) + 1
+    
     most_used_lot = None
-    if user_reservations:
-        lot_counts = {}
-        for res in user_reservations:
-            parking_spot = ParkingSpot.query.get(res.spot_id)
-            if parking_spot:
-                lot_id = parking_spot.lot_id
-                lot_counts[lot_id] = lot_counts.get(lot_id, 0) + 1
-        if lot_counts:
-            most_used_lot_id = max(lot_counts, key=lot_counts.get)
-            most_used_lot = ParkingLot.query.get(most_used_lot_id).name
-
-    return jsonify(
-        {
-            "total_bookings": total_bookings,
-            "total_amount_spent": round(total_amount_spent, 2),
-            "most_used_parking_lot": most_used_lot,
+    if lot_usage:
+        most_used_lot_id = max(lot_usage, key=lot_usage.get)
+        most_used_lot = ParkingLot.query.get(most_used_lot_id).name
+    
+    # Get current booking details if exists
+    current_booking = None
+    if active_reservations:
+        active = active_reservations[0]  # Assuming only one active booking
+        spot = ParkingSpot.query.get(active.spot_id)
+        lot = ParkingLot.query.get(spot.lot_id) if spot else None
+        current_booking = {
+            'spot_number': spot.spot_number if spot else None,
+            'lot_name': lot.name if lot else None,
+            'start_time': active.parking_timestamp.isoformat(),
+            'duration_hours': round((datetime.utcnow() - active.parking_timestamp).total_seconds() / 3600, 2)
         }
-    )
+    
+    return jsonify({
+        'current_booking': current_booking,
+        'total_amount_spent': round(total_amount_spent, 2),
+        'total_hours_parked': round(total_hours_parked, 2),
+        'average_booking_duration': round(total_hours_parked / len(completed_reservations), 2) if completed_reservations else 0,
+        'favorite_parking_lot': most_used_lot,
+        'last_booking': (
+            max(r.parking_timestamp for r in completed_reservations).isoformat()
+            if completed_reservations else None
+        )
+    })
 
 
 @user_bp.route("/payment-datails/<int:res_id>", methods=["GET"])
