@@ -1,199 +1,137 @@
 <template>
   <div class="user-dashboard">
-    <h1>User Dashboard</h1>
-    <p>Welcome, {{ authStore.user?.name }}!</p>
-    <ul class="nav nav-tabs" id="userTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="parking-lots-tab" data-bs-toggle="tab" data-bs-target="#parking-lots"
-          type="button" role="tab" aria-controls="parking-lots" aria-selected="true">
-          Parking Lots
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="my-reservations-tab" data-bs-toggle="tab" data-bs-target="#my-reservations"
-          type="button" role="tab" aria-controls="my-reservations" aria-selected="false">
-          My Reservations
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button"
-          role="tab" aria-controls="summary" aria-selected="false">
-          Summary
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab"
-          aria-controls="export" aria-selected="false">
-          Export Data
-        </button>
-      </li>
-    </ul>
+    <header class="dashboard-header">
+      <h1><v-icon name="fa-user-circle" /> User Dashboard</h1>
+      <p>Welcome, {{ authStore.user?.name }}!</p>
+    </header>
 
-    <div class="tab-content" id="userTabsContent">
+    <div class="dashboard-tabs">
+      <button class="tab-button" :class="{ active: activeTab === 'summary' }" @click="activeTab = 'summary'">
+        <v-icon name="co-chart" /> Summary
+      </button>
+      <button class="tab-button" :class="{ active: activeTab === 'parking-lots' }" @click="activeTab = 'parking-lots'">
+        <v-icon name="fa-parking" /> Available Lots
+      </button>
+      <button class="tab-button" :class="{ active: activeTab === 'my-reservations' }"
+        @click="activeTab = 'my-reservations'">
+        <v-icon name="fa-history" /> My Reservations
+      </button>
+    </div>
+
+    <div>
+      <!-- Summary Tab -->
+      <div v-if="activeTab === 'summary'">
+        <div v-if="summaryData" class="row g-4">
+          <div class="col-md-4">
+            <div class="stat-card primary">
+              <h5><v-icon name="fa-clock" /> Current Booking</h5>
+              <h2>{{ summaryData.current_booking ? 'Active' : 'None' }}</h2>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card info">
+              <h5><v-icon name="fa-rupee-sign" /> Total Spent</h5>
+              <h2>₹{{ (summaryData.total_amount_spent || 0).toFixed(2) }}</h2>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card success">
+              <h5><v-icon name="fa-hourglass-half" /> Total Hours Parked</h5>
+              <h2>{{ summaryData.total_hours_parked || 0 }}</h2>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="chart-container">
+              <Bar v-if="userSummaryChartData" :data="userSummaryChartData" :options="chartOptions" />
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="details-card">
+              <h5><v-icon name="fa-info-circle" /> Parking Stats</h5>
+              <ul>
+                <li>
+                  <span><v-icon name="fa-clock" /> Avg. Duration</span>
+                  <span>{{ summaryData.average_booking_duration || 0 }} hrs</span>
+                </li>
+                <li>
+                  <span><v-icon name="fa-star" /> Favorite Lot</span>
+                  <span>{{ summaryData.favorite_parking_lot || 'N/A' }}</span>
+                </li>
+                <li v-if="summaryData.last_booking">
+                  <span><v-icon name="fa-calendar" /> Last Booking</span>
+                  <span>{{ new Date(summaryData.last_booking).toLocaleString() }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Parking Lots Tab -->
-      <div class="tab-pane fade show active" id="parking-lots" role="tabpanel" aria-labelledby="parking-lots-tab">
-        <h2 class="mt-4">Available Parking Lots</h2>
-        <div v-if="parkingLots.length > 0">
-          <table class="table table-striped">
+      <div v-if="activeTab === 'parking-lots'" class="tab-pane">
+        <div class="table-responsive">
+          <table class="table table-hover">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Address</th>
-                <th>Pincode</th>
-                <th>Available Spots</th>
-                <th>Price per Hour</th>
-                <th>Actions</th>
+                <th><v-icon name="fa-warehouse" /> Name</th>
+                <th><v-icon name="fa-map-marker-alt" /> Address</th>
+                <th><v-icon name="fa-car" /> Available Spots</th>
+                <th><v-icon name="fa-rupee-sign" /> Price/hr</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="lot in parkingLots" :key="lot.id">
-                <td>{{ lot.id }}</td>
                 <td>{{ lot.name }}</td>
                 <td>{{ lot.address }}</td>
-                <td>{{ lot.pincode }}</td>
                 <td>{{ lot.number_of_spots }}</td>
-                <td>{{ lot.price }}</td>
+                <td>₹{{ lot.price }}</td>
                 <td>
                   <button :disabled="isReserved" class="btn btn-sm btn-success" @click="bookSpot(lot)">
-                    Book Spot
+                    <v-icon name="fa-check-circle" /> Book Spot
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p v-else>No parking lots available.</p>
       </div>
 
       <!-- My Reservations Tab -->
-      <div class="tab-pane fade" id="my-reservations" role="tabpanel" aria-labelledby="my-reservations-tab">
-        <h2 class="mt-4">My Parking Reservations</h2>
-        <div v-if="userReservations.length > 0">
-          <table class="table table-striped">
+      <div v-if="activeTab === 'my-reservations'" class="tab-pane">
+        <div class="table-responsive">
+          <table class="table table-hover">
             <thead>
               <tr>
-                <th>Reservation ID</th>
-                <th>Spot ID</th>
-                <th>Parking Lot</th>
-                <th>Parking Time</th>
-                <th>Leaving Time</th>
-                <th>Cost</th>
-                <th>Actions</th>
+                <th><v-icon name="fa-parking" /> Lot</th>
+                <th><v-icon name="fa-sign-in-alt" /> Parked At</th>
+                <th><v-icon name="fa-sign-out-alt" /> Left At</th>
+                <th><v-icon name="fa-wallet" /> Cost</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="res in userReservations" :key="res.id">
-                <td>{{ res.id }}</td>
-                <td>{{ res.spot_id }}</td>
                 <td>{{ res.parking_lot_name }}</td>
                 <td>{{ new Date(res.parking_timestamp).toLocaleString() }}</td>
                 <td>
                   {{
-                    res.leaving_timestamp ? new Date(res.leaving_timestamp).toLocaleString() : 'N/A'
+                    res.leaving_timestamp
+                      ? new Date(res.leaving_timestamp).toLocaleString()
+                      : 'Parked'
                   }}
                 </td>
-                <td>{{ res.parking_cost ? res.parking_cost.toFixed(2) : 'N/A' }}</td>
+                <td>{{ res.parking_cost ? '₹' + res.parking_cost.toFixed(2) : 'N/A' }}</td>
                 <td>
                   <button v-if="!res.leaving_timestamp" class="btn btn-sm btn-warning"
                     @click="releaseParkingSpot(res.id)">
-                    Release Spot
+                    <v-icon name="fa-door-open" /> Release
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p v-else>You have no parking reservations.</p>
-      </div>
-
-      <!-- Summary Tab -->
-      <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
-        <h2 class="mt-4 mb-4">My Parking Summary</h2>
-        
-        <div v-if="summaryData" class="row g-4">
-          <!-- Stats Cards -->
-          <div class="col-md-6 col-lg-4">
-            <div class="card bg-primary text-white h-100">
-              <div class="card-body">
-                <h5 class="card-title">Current Booking</h5>
-                <h2 class="display-5">{{ summaryData.current_booking ? 'Active' : 'None' }}</h2>
-              </div>
-            </div>
-          </div>
-          
-          <div class="col-md-6 col-lg-4">
-            <div class="card bg-info text-white h-100">
-              <div class="card-body">
-                <h5 class="card-title">Total Amount Spent</h5>
-                <h2 class="display-5">₹{{ (summaryData.total_amount_spent || 0).toFixed(2) }}</h2>
-              </div>
-            </div>
-          </div>
-          
-          <div class="col-md-6 col-lg-4">
-            <div class="card bg-success text-white h-100">
-              <div class="card-body">
-                <h5 class="card-title">Total Hours Parked</h5>
-                <h2 class="display-5">{{ summaryData.total_hours_parked || 0 }}</h2>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Detailed Stats -->
-          <div class="col-md-6">
-            <div class="card h-100">
-              <div class="card-body">
-                <h5 class="card-title mb-4">Parking Statistics</h5>
-                <div class="list-group list-group-flush">
-                  <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>Total Hours Parked</span>
-                    <span class="badge bg-primary rounded-pill">{{ summaryData.total_hours_parked || 0 }} hrs</span>
-                  </div>
-                  <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>Average Booking Duration</span>
-                    <span class="badge bg-success rounded-pill">{{ summaryData.average_booking_duration || 0 }} hrs</span>
-                  </div>
-                  <div class="list-group-item">
-                    <div class="fw-bold">Favorite Parking Lot</div>
-                    <div class="text-muted">{{ summaryData.favorite_parking_lot || 'No parking history' }}</div>
-                  </div>
-                  <div v-if="summaryData.last_booking" class="list-group-item">
-                    <div class="fw-bold">Last Booking</div>
-                    <div class="text-muted">{{ new Date(summaryData.last_booking).toLocaleString() }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Chart -->
-          <div class="col-md-6">
-            <div class="card h-100">
-              <div class="card-body">
-                <h5 class="card-title mb-4">Booking Overview</h5>
-                <div style="height: 250px;">
-                  <Bar v-if="userSummaryChartData" :data="userSummaryChartData" :options="chartOptions" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div v-else class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p class="mt-3">Loading summary data...</p>
-        </div>
-      </div>
-
-      <!-- Export Data Tab -->
-      <div class="tab-pane fade" id="export" role="tabpanel" aria-labelledby="export-tab">
-        <h2 class="mt-4">Export Parking Data</h2>
-        <p>Click the button below to export your parking details as a CSV file.</p>
-        <button class="btn btn-primary" @click="exportCsv">Export to CSV</button>
-        <p v-if="exportMessage" class="mt-3">{{ exportMessage }}</p>
       </div>
     </div>
   </div>
@@ -203,9 +141,6 @@
 import apiClient from '../../services/api'
 import { useAuthStore } from '../../stores/auth'
 import { Bar } from 'vue-chartjs'
-import { toast } from 'vue3-toastify'
-import 'vue3-toastify/dist/index.css'
-
 import {
   Chart as ChartJS,
   Title,
@@ -215,6 +150,8 @@ import {
   CategoryScale,
   LinearScale,
 } from 'chart.js'
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -224,62 +161,56 @@ export default {
   data() {
     return {
       authStore: useAuthStore(),
+      activeTab: 'summary',
       parkingLots: [],
       userReservations: [],
       summaryData: null,
-      exportMessage: '',
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top',
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1
-            }
-          }
-        }
-      },
     }
   },
   computed: {
-    userSummaryChartData() {
-      if (!this.summaryData) return null;
-      
+    chartOptions() {
       return {
-        labels: ['Total Hours Parked', 'Avg. Duration'],
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: { beginAtZero: true },
+        },
+      }
+    },
+    userSummaryChartData() {
+      if (!this.summaryData) return null
+      return {
+        labels: ['Total Hours', 'Avg. Duration'],
         datasets: [
           {
             label: 'Hours',
-            backgroundColor: ['#4e73df', '#1cc88a'],
+            backgroundColor: ['rgba(106, 90, 205, 0.5)', 'rgba(255, 99, 71, 0.5)'],
+            borderColor: ['rgba(106, 90, 205, 1)', 'rgba(255, 99, 71, 1)'],
+            borderWidth: 1,
             data: [
               this.summaryData.total_hours_parked || 0,
-              this.summaryData.average_booking_duration || 0
+              this.summaryData.average_booking_duration || 0,
             ],
-            borderWidth: 1
-          }
-        ]
-      };
+          },
+        ],
+      }
     },
-
     isReserved() {
-      return this.userReservations.some((reservation) => reservation.leaving_timestamp === null)
+      return this.userReservations.some((res) => !res.leaving_timestamp)
     },
   },
   async created() {
-    await this.fetchData()
+    this.fetchData()
   },
   methods: {
     async fetchData() {
-      await this.fetchParkingLots()
-      await this.fetchUserReservations()
-      await this.fetchSummaryData()
+      console.log('fetching the data')
+      this.fetchParkingLots()
+      this.fetchUserReservations()
+      this.fetchSummaryData()
     },
     async fetchParkingLots() {
       try {
@@ -302,6 +233,7 @@ export default {
         response.data.unshift(el[0])
 
         this.userReservations = response.data
+        console.log(this.userReservations)
       } catch (error) {
         console.error('Error fetching user reservations:', error)
         this.userReservations = []
@@ -317,55 +249,22 @@ export default {
     },
     async bookSpot(lot) {
       try {
-        const bookingResponse = await apiClient.post(`/user/parking-lots/${lot.id}/book`)
-        if (bookingResponse.status === 201) {
-          this.bookingMessage = `Payment successful and spot booked! Spot ID: ${bookingResponse.data.spot_id}`
-          this.bookingSucess = true
-
-          toast.success(this.bookingMessage, {
-            autoClose: 1000,
-          })
-
-          await this.fetchData()
-        } else {
-          this.bookingMessage = bookingResponse.data.message || 'Failed to book spot after payment.'
-          this.bookingSucess = false
-        }
+        const response = await apiClient.post(`/user/parking-lots/${lot.id}/book`)
+        this.fetchData()
+        toast.success(response.data.message)
       } catch (error) {
-        console.error('Booking failed:', error)
-        this.bookingMessage = error.response?.data?.message || 'An error occurred during payment.'
-        this.bookingSucess = false
-
-        toast.error(this.bookingMessage, {
-          autoClose: 1000,
-        })
+        toast.error(error.response?.data?.message || 'Booking failed.')
       }
     },
     async releaseParkingSpot(reservationId) {
       try {
         const response = await apiClient.post(`/user/reservations/${reservationId}/release`)
-        alert(response.data.message + `\nParking Cost: ₹${response.data.parking_cost.toFixed(2)}`)
-
         this.$router.push({
           name: 'payment',
-          params: {
-            resId: reservationId,
-            parkingCost: response.data.parking_cost.toFixed(2),
-          },
+          params: { resId: reservationId, parkingCost: response.data.parking_cost.toFixed(2) },
         })
       } catch (error) {
-        console.error('Error releasing spot:', error)
-        alert(error.response?.data?.message || 'Failed to release parking spot.')
-      }
-    },
-    async exportCsv() {
-      try {
-        this.exportMessage = 'Initiating CSV export...'
-        const response = await apiClient.post('/user/export-parking-details')
-        this.exportMessage = response.data.message
-      } catch (error) {
-        console.error('Error exporting CSV:', error)
-        this.exportMessage = error.response?.data?.message || 'Failed to initiate CSV export.'
+        toast.error(error.response?.data?.message || 'Failed to release spot.')
       }
     },
   },
@@ -373,10 +272,233 @@ export default {
 </script>
 
 <style scoped>
+:root {
+  --primary-color: #6a5acd;
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+}
+
+.user-dashboard {
+  padding: 2rem;
+  background: linear-gradient(120deg, #f0f2f5, #e6eaf0);
+  min-height: 100vh;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+.dashboard-header {
+  text-align: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  animation: slideFadeIn 0.6s ease-out;
+}
+
+.dashboard-header h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.dashboard-header p {
+  color: #555;
+  font-size: 1.2rem;
+}
+
+.dashboard-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  color: #555;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+}
+
+.tab-button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.stat-card {
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  animation: popIn 0.4s ease forwards;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.primary {
+  background: linear-gradient(135deg, #6a5acd, #836fff);
+}
+
+.stat-card.success {
+  background: linear-gradient(135deg, #28a745, #70e000);
+}
+
+.stat-card.warning {
+  background: linear-gradient(135deg, #ffc107, #f7b500);
+}
+
+.stat-card.info {
+  background: linear-gradient(135deg, #17a2b8, #00c2cb);
+}
+
 .chart-container {
-  position: relative;
-  height: 300px;
-  /* Adjust height as needed */
-  width: 100%;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  height: 350px;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.05);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.lot-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  animation: fadeInUp 0.6s ease;
+}
+
+.lot-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.table-responsive {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.5s ease;
+}
+
+.modal-content {
+  border-radius: 12px;
+  animation: zoomIn 0.3s ease;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5 !important;
+}
+
+.btn-close {
+  transition: transform 0.2s ease;
+}
+
+.btn-close:hover {
+  transform: scale(1.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideFadeIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(106, 90, 205, 0.1);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.details-card {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.05);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.details-card h5 {
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.details-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.details-card li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  font-weight: 500;
 }
 </style>
