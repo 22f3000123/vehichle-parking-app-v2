@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
+import LandingPage from '../components/LandingPage.vue';
 import Login from '../components/auth/Login.vue'
 import Register from '../components/auth/Register.vue'
 import AdminDashboard from '../components/admin/AdminDashboard.vue'
@@ -9,7 +10,7 @@ import PaymentPortal from '../components/PaymentPortal.vue'
 import ParkingLotDetails from '../components/admin/ParkingLotDetails.vue' // Import new component
 
 const routes = [
-  { path: '/', redirect: '/login' },
+  { path: '/', name: 'landing', component: LandingPage },
   { path: '/login', name: 'login', component: Login },
   { path: '/register', name: 'register', component: Register },
   {
