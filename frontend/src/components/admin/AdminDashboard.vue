@@ -1,93 +1,141 @@
 <template>
   <div class="admin-dashboard">
-    <h1>Admin Dashboard</h1>
-    <p>Welcome, Admin!</p>
+    <header class="dashboard-header">
+      <h1><v-icon name="fa-tools" /> Admin Dashboard</h1>
+      <p><v-icon name="fa-user-shield" /> Welcome, Admin!</p>
+    </header>
 
-    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="parking-lots-tab" data-bs-toggle="tab" data-bs-target="#parking-lots" type="button" role="tab" aria-controls="parking-lots" aria-selected="true">Parking Lots</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="false">Users</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="parking-spots-tab" data-bs-toggle="tab" data-bs-target="#parking-spots" type="button" role="tab" aria-controls="parking-spots" aria-selected="false">Parking Spots</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="false">Summary</button>
-      </li>
-    </ul>
+    <div class="dashboard-tabs">
+      <button class="tab-button" :class="{ active: activeTab === 'summary' }" @click="activeTab = 'summary'">
+        <v-icon name="co-chart" /> Summary
+      </button>
+      <button class="tab-button" :class="{ active: activeTab === 'parking-lots' }" @click="activeTab = 'parking-lots'">
+        <v-icon name="fa-parking" /> Parking Lots
+      </button>
+      <button class="tab-button" :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">
+        <v-icon name="fa-users" /> Users
+      </button>
+      <button class="tab-button" :class="{ active: activeTab === 'parking-spots' }"
+        @click="activeTab = 'parking-spots'">
+        <v-icon name="fa-map-marker-alt" /> Parking Spots
+      </button>
+    </div>
 
-    <div class="tab-content" id="adminTabsContent">
+    <div>
+      <!-- Summary Tab -->
+      <div v-if="activeTab === 'summary'">
+        <div v-if="summaryData" class="row g-4">
+          <!-- Stats Cards -->
+          <div class="col-md-3">
+            <div class="stat-card primary">
+              <h5>Total Parking Lots</h5>
+              <h2>{{ summaryData.total_parking_lots }}</h2>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card success">
+              <h5>Available Spots</h5>
+              <h2>{{ summaryData.available_spots }}</h2>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card warning">
+              <h5>Occupied Spots</h5>
+              <h2>{{ summaryData.occupied_spots }}</h2>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card info">
+              <h5>Total Revenue</h5>
+              <h2>₹{{ summaryData.total_revenue }}</h2>
+            </div>
+          </div>
+
+          <!-- Charts -->
+          <div class="col-md-8">
+            <div class="chart-container">
+              <Line v-if="dailyReservationsChartData" :data="dailyReservationsChartData" :options="lineChartOptions" />
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="chart-container">
+              <Pie v-if="spotDistributionChartData" :data="spotDistributionChartData" :options="chartOptions" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Parking Lots Tab -->
-      <div class="tab-pane fade show active" id="parking-lots" role="tabpanel" aria-labelledby="parking-lots-tab">
-        <h2 class="mt-4">Manage Parking Lots</h2>
-        <button class="btn btn-primary mb-3" @click="showCreateLotModal = true">Create New Parking Lot</button>
-
+      <div v-if="activeTab === 'parking-lots'" class="tab-pane">
+        <button class="btn btn-primary mb-3" @click="showCreateLotModal = true">
+          Create New Parking Lot
+        </button>
         <div v-if="parkingLots.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           <div class="col" v-for="lot in parkingLots" :key="lot.id">
-            <div class="card h-100 shadow-sm">
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title">{{ lot.name }}</h5>
-                <p class="card-text mb-1"><strong>Address:</strong> {{ lot.address }}</p>
-                <p class="card-text mb-1"><strong>Pincode:</strong> {{ lot.pincode }}</p>
-                <p class="card-text mb-1"><strong>Spots:</strong> {{ lot.number_of_spots }}</p>
-                <p class="card-text mb-3"><strong>Price:</strong> ₹{{ lot.price }}</p>
-                <div class="mt-auto">
-                  <button class="btn btn-sm btn-info me-2" @click="editParkingLot(lot)">Edit</button>
-                  <button class="btn btn-sm btn-danger" @click="deleteParkingLot(lot.id)">Delete</button>
-                  <button class="btn btn-sm btn-primary ms-2" @click="viewParkingLotDetails(lot.id)">View Details</button>
-                </div>
+            <div class="lot-card">
+              <h5>{{ lot.name }}</h5>
+              <p>{{ lot.address }}, {{ lot.pincode }}</p>
+              <p>
+                <strong>Spots:</strong> {{ lot.number_of_spots }} | <strong>Price:</strong> ₹{{
+                  lot.price
+                }}/hr
+              </p>
+              <div class="lot-actions">
+                <button class="btn btn-sm btn-info me-2" @click="editParkingLot(lot)">Edit</button>
+                <button class="btn btn-sm btn-danger" @click="deleteParkingLot(lot.id)">
+                  Delete
+                </button>
+                <button class="btn btn-sm btn-secondary ms-2" @click="viewParkingLotDetails(lot.id)">
+                  View
+                </button>
               </div>
             </div>
           </div>
         </div>
-        <p v-else>No parking lots found.</p>
       </div>
 
       <!-- Users Tab -->
-      <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
-        <h2 class="mt-4">Registered Users</h2>
-        <div v-if="users.length > 0">
-          <table class="table table-striped">
+      <div v-if="activeTab === 'users'" class="tab-pane">
+        <div class="table-responsive">
+          <table class="table table-hover">
             <thead>
               <tr>
                 <th>ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
+                <th>Name</th>
                 <th>Username</th>
                 <th>Email</th>
-                <th>Active</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="user in users" :key="user.id">
                 <td>{{ user.id }}</td>
-                <td>{{ user.first_name }}</td>
-                <td>{{ user.last_name }}</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
                 <td>{{ user.username }}</td>
                 <td>{{ user.email }}</td>
-                <td>{{ user.active ? 'Yes' : 'No' }}</td>
+                <td>
+                  <span class="badge" :class="user.active ? 'bg-success' : 'bg-danger'">{{
+                    user.active ? 'Active' : 'Inactive'
+                    }}</span>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p v-else>No users found.</p>
       </div>
 
       <!-- Parking Spots Tab -->
-      <div class="tab-pane fade" id="parking-spots" role="tabpanel" aria-labelledby="parking-spots-tab">
-        <h2 class="mt-4">Parking Spot Status</h2>
-        <div v-if="parkingSpots.length > 0">
-          <table class="table table-striped">
+      <div v-if="activeTab === 'parking-spots'" class="tab-pane">
+        <div class="table-responsive">
+          <table class="table table-hover">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Lot Name</th>
-                <th>Spot Number</th>
+                <th>Spot</th>
                 <th>Status</th>
                 <th>Reserved By</th>
-                <th>Parking Timestamp</th>
+                <th>Timestamp</th>
               </tr>
             </thead>
             <tbody>
@@ -95,229 +143,104 @@
                 <td>{{ spot.id }}</td>
                 <td>{{ spot.parking_lot_name }}</td>
                 <td>{{ spot.spot_number }}</td>
-                <td>{{ spot.status === 'A' ? 'Available' : 'Occupied' }}</td>
+                <td>
+                  <span class="badge" :class="spot.status === 'A' ? 'bg-success' : 'bg-warning'">{{
+                    spot.status === 'A' ? 'Available' : 'Occupied'
+                    }}</span>
+                </td>
                 <td>{{ spot.reserved_by ? spot.reserved_by.email : 'N/A' }}</td>
-                <td>{{ spot.reserved_by ? new Date(spot.reserved_by.parking_timestamp).toLocaleString() : 'N/A' }}</td>
+                <td>
+                  {{
+                    spot.reserved_by
+                      ? new Date(spot.reserved_by.parking_timestamp).toLocaleString()
+                      : 'N/A'
+                  }}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p v-else>No parking spots found.</p>
-      </div>
-
-      <!-- Summary Tab -->
-      <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
-        <div class="container-fluid mt-4">
-          <h2>Parking Analytics Dashboard</h2>
-          
-          <div v-if="summaryData" class="row g-4">
-            <!-- Stats Cards -->
-            <div class="col-md-3">
-              <div class="card text-white bg-primary h-100">
-                <div class="card-body">
-                  <h5 class="card-title">Total Parking Lots</h5>
-                  <h2 class="display-4">{{ summaryData.total_parking_lots }}</h2>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="card text-white bg-success h-100">
-                <div class="card-body">
-                  <h5 class="card-title">Available Spots</h5>
-                  <h2 class="display-4">{{ summaryData.available_spots }}</h2>
-                  <p class="mb-0">out of {{ summaryData.total_spots }} total</p>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="card text-white bg-warning h-100">
-                <div class="card-body">
-                  <h5 class="card-title">Occupied Spots</h5>
-                  <h2 class="display-4">{{ summaryData.occupied_spots }}</h2>
-                  <p class="mb-0">{{ summaryData.total_spots > 0 ? Math.round((summaryData.occupied_spots / summaryData.total_spots) * 100) : 0 }}% occupancy</p>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-md-3">
-              <div class="card text-white bg-info h-100">
-                <div class="card-body">
-                  <h5 class="card-title">Total Revenue</h5>
-                  <h2 class="display-4">₹{{ summaryData.total_revenue }}</h2>
-                  <p class="mb-0">from {{ summaryData.total_reservations }} reservations</p>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Main Charts Row -->
-            <div class="col-md-8">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h5 class="card-title">Daily Reservations</h5>
-                  <div style="height: 300px;">
-                    <Line
-                      v-if="dailyReservationsChartData"
-                      :data="dailyReservationsChartData"
-                      :options="lineChartOptions"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-md-4">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h5 class="card-title">Reservation Status</h5>
-                  <div style="height: 300px;">
-                    <Pie
-                      v-if="reservationStatusChartData"
-                      :data="reservationStatusChartData"
-                      :options="chartOptions"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Additional Stats -->
-            <div class="col-md-6">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h5 class="card-title">Reservation Trends</h5>
-                  <div class="row text-center mt-3">
-                    <div class="col-6">
-                      <div class="p-3 bg-light rounded">
-                        <h3 class="text-primary">{{ summaryData.average_duration_hours }} <small class="h6">hours</small></h3>
-                        <p class="text-muted mb-0">Avg. Duration</p>
-                      </div>
-                    </div>
-                    <div class="col-6">
-                      <div class="p-3 bg-light rounded">
-                        <h3 class="text-primary">₹{{ summaryData.total_revenue }}</h3>
-                        <p class="text-muted mb-0">Total Revenue</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="col-md-6">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h5 class="card-title">Spot Distribution</h5>
-                  <div style="height: 300px;">
-                    <Pie
-                      v-if="spotDistributionChartData"
-                      :data="spotDistributionChartData"
-                      :options="{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            position: 'top',
-                          },
-                          title: {
-                            display: true,
-                            text: 'Spot Distribution'
-                          }
-                        }
-                      }"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Stats Summary -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-body">
-                  <h5 class="card-title">Key Metrics</h5>
-                  <div class="row text-center">
-                    <div class="col-md-4">
-                      <h3>{{ summaryData.average_duration_hours }} hrs</h3>
-                      <p class="text-muted">Avg. Reservation Duration</p>
-                    </div>
-                    <div class="col-md-4">
-                      <h3>{{ summaryData.reservation_status.active }}</h3>
-                      <p class="text-muted">Active Reservations</p>
-                    </div>
-                    <div class="col-md-4">
-                      <h3>{{ summaryData.reservation_status.completed }}</h3>
-                      <p class="text-muted">Completed Reservations</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div v-else class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3">Loading dashboard data...</p>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- Create/Edit Parking Lot Modal -->
-    <div class="modal fade" :class="{ 'show': showCreateLotModal || showEditLotModal }" tabindex="-1" aria-labelledby="parkingLotModalLabel" aria-hidden="true" :style="{ display: (showCreateLotModal || showEditLotModal) ? 'block' : 'none' }">
+    <!-- Modal -->
+    <div class="modal fade" :class="{ show: showCreateLotModal || showEditLotModal }" tabindex="-1"
+      :style="{ display: showCreateLotModal || showEditLotModal ? 'block' : 'none' }">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="parkingLotModalLabel">{{ isEditMode ? 'Edit Parking Lot' : 'Create New Parking Lot' }}</h5>
-            <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
+            <h5 class="modal-title">
+              {{ isEditMode ? 'Edit Parking Lot' : 'Create New Parking Lot' }}
+            </h5>
+            <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="isEditMode ? updateParkingLot() : createParkingLot()">
               <div class="mb-3">
                 <label for="lotName" class="form-label">Name</label>
-                <input type="text" class="form-control" id="lotName" v-model="currentLot.name" required>
+                <input type="text" class="form-control" id="lotName" v-model="currentLot.name" required />
               </div>
               <div class="mb-3">
                 <label for="lotAddress" class="form-label">Address</label>
-                <input type="text" class="form-control" id="lotAddress" v-model="currentLot.address" required>
+                <input type="text" class="form-control" id="lotAddress" v-model="currentLot.address" required />
               </div>
               <div class="mb-3">
                 <label for="lotPincode" class="form-label">Pincode</label>
-                <input type="text" class="form-control" id="lotPincode" v-model="currentLot.pincode" required>
+                <input type="text" class="form-control" id="lotPincode" v-model="currentLot.pincode" required />
               </div>
               <div class="mb-3" v-if="!isEditMode">
                 <label for="lotSpots" class="form-label">Number of Spots</label>
-                <input type="number" class="form-control" id="lotSpots" v-model.number="currentLot.number_of_spots" required min="1">
+                <input type="number" class="form-control" id="lotSpots" v-model.number="currentLot.number_of_spots"
+                  required min="1" />
               </div>
               <div class="mb-3">
                 <label for="lotPrice" class="form-label">Price per Hour</label>
-                <input type="number" class="form-control" id="lotPrice" v-model.number="currentLot.price" required step="0.01" min="0">
+                <input type="number" class="form-control" id="lotPrice" v-model.number="currentLot.price" required
+                  step="0.01" min="0" />
               </div>
-              <button type="submit" class="btn btn-primary">{{ isEditMode ? 'Update' : 'Create' }}</button>
+              <button type="submit" class="btn btn-primary">
+                {{ isEditMode ? 'Update' : 'Create' }}
+              </button>
             </form>
           </div>
         </div>
       </div>
     </div>
-    <div class="modal-backdrop fade" :class="{ 'show': showCreateLotModal || showEditLotModal }" :style="{ display: (showCreateLotModal || showEditLotModal) ? 'block' : 'none' }"></div>
-
+    <div class="modal-backdrop fade" :class="{ show: showCreateLotModal || showEditLotModal }"
+      :style="{ display: showCreateLotModal || showEditLotModal ? 'block' : 'none' }"></div>
   </div>
 </template>
 
 <script>
-import apiClient from '../../services/api';
-import { useAuthStore } from '../../stores/auth';
-import { Bar, Pie, Line } from 'vue-chartjs';
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement, PointElement, LineElement } from 'chart.js';
+import apiClient from '../../services/api'
+import { useAuthStore } from '../../stores/auth'
+import { Bar, Pie, Line } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  ArcElement,
+  PointElement,
+  LineElement,
+} from 'chart.js'
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 
 ChartJS.register(
-  Title, Tooltip, Legend, 
-  BarElement, CategoryScale, LinearScale,
-  ArcElement, PointElement, LineElement
-);
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  ArcElement,
+  PointElement,
+  LineElement,
+)
 
 export default {
   name: 'AdminDashboard',
@@ -325,6 +248,7 @@ export default {
   data() {
     return {
       authStore: useAuthStore(),
+      activeTab: 'summary',
       parkingLots: [],
       users: [],
       parkingSpots: [],
@@ -332,268 +256,380 @@ export default {
       showCreateLotModal: false,
       showEditLotModal: false,
       isEditMode: false,
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          title: {
-            display: true,
-            text: 'Parking Statistics'
-          }
-        }
-      },
-      lineChartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          title: {
-            display: true,
-            text: 'Daily Reservations Trend'
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Number of Reservations'
-            }
-          },
-          x: {
-            title: {
-              display: true,
-              text: 'Date'
-            }
-          }
-        }
-      },
       currentLot: {
         id: null,
         name: '',
         address: '',
         pincode: '',
         number_of_spots: 0,
-        price: 0.0
+        price: 0.0,
       },
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    };
-  },
-  computed: {
-    dailyReservationsChartData() {
-      if (!this.summaryData || !this.summaryData.daily_reservations) return null;
-      
-      // Sort by date
-      const sortedData = [...this.summaryData.daily_reservations].sort((a, b) => 
-        new Date(a.date) - new Date(b.date)
-      );
-      
-      const labels = sortedData.map(day => {
-        const date = new Date(day.date);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      });
-      
-      const reservationData = sortedData.map(day => day.count);
-      
-      return {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Reservations',
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgb(54, 162, 235)',
-            borderWidth: 2,
-            pointBackgroundColor: 'rgb(54, 162, 235)',
-            pointBorderColor: '#fff',
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgb(54, 162, 235)',
-            data: reservationData
-          }
-        ]
-      };
-    },
-    
-    reservationStatusChartData() {
-      if (!this.summaryData) return null;
-      
-      const active = this.summaryData.reservation_status?.active || 0;
-      const completed = this.summaryData.reservation_status?.completed || 0;
-      
-      return {
-        labels: ['Active Reservations', 'Completed Reservations'],
-        datasets: [
-          {
-            backgroundColor: ['#ff9800', '#4caf50'],
-            data: [active, completed],
-            borderWidth: 1
-          }
-        ]
-      };
-    },
-    
-    spotDistributionChartData() {
-      if (!this.summaryData) return null;
-      
-      const available = this.summaryData.available_spots || 0;
-      const occupied = this.summaryData.occupied_spots || 0;
-      
-      return {
-        labels: ['Available Spots', 'Occupied Spots'],
-        datasets: [
-          {
-            backgroundColor: ['#4caf50', '#ff9800'],
-            data: [available, occupied],
-            borderWidth: 1,
-            hoverOffset: 10
-          }
-        ]
-      };
-    },
-    
-    reservationTrendsData() {
-      if (!this.summaryData) return null;
-      
-      return {
-        labels: ['Reservations', 'Revenue', 'Duration'],
-        datasets: [
-          {
-            label: 'Metrics',
-            data: [
-              this.summaryData.total_reservations,
-              this.summaryData.total_revenue,
-              this.summaryData.average_duration_hours * 10 // Scale for better visualization
-            ],
-            backgroundColor: [
-              'rgba(54, 162, 235, 0.5)',
-              'rgba(75, 192, 192, 0.5)',
-              'rgba(255, 159, 64, 0.5)'
-            ],
-            borderColor: [
-              'rgb(54, 162, 235)',
-              'rgb(75, 192, 192)',
-              'rgb(255, 159, 64)'
-            ],
-            borderWidth: 1
-          }
-        ]
-      };
     }
   },
+  computed: {
+    chartOptions() {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+        },
+      }
+    },
+    lineChartOptions() {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+      }
+    },
+    dailyReservationsChartData() {
+      if (!this.summaryData || !this.summaryData.daily_reservations) return null
+      const sortedData = [...this.summaryData.daily_reservations].sort(
+        (a, b) => new Date(a.date) - new Date(b.date),
+      )
+      const labels = sortedData.map((day) =>
+        new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      )
+      const data = sortedData.map((day) => day.count)
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Daily Reservations',
+            backgroundColor: 'rgba(106, 90, 205, 0.2)',
+            borderColor: 'rgba(106, 90, 205, 1)',
+            data,
+          },
+        ],
+      }
+    },
+    spotDistributionChartData() {
+      if (!this.summaryData) return null
+      return {
+        labels: ['Available', 'Occupied'],
+        datasets: [
+          {
+            backgroundColor: ['#32CD32', '#FF6347'],
+            data: [this.summaryData.available_spots, this.summaryData.occupied_spots],
+          },
+        ],
+      }
+    },
+  },
   async created() {
-    await this.fetchData();
+    await this.fetchData()
+  },
+  async created() {
+    await this.fetchData()
   },
   methods: {
     async fetchData() {
-      await this.fetchParkingLots();
-      await this.fetchUsers();
-      await this.fetchParkingSpots();
-      await this.fetchSummaryData();
+      this.fetchParkingLots()
+      this.fetchUsers()
+      this.fetchParkingSpots()
+      this.fetchSummaryData()
     },
     async fetchParkingLots() {
       try {
-        const response = await apiClient.get('/admin/parking-lots');
-        this.parkingLots = response.data;
+        const response = await apiClient.get('/admin/parking-lots')
+        this.parkingLots = response.data
       } catch (error) {
-        console.error('Error fetching parking lots:', error);
+        console.error('Error fetching parking lots:', error)
       }
     },
     async fetchUsers() {
       try {
-        const response = await apiClient.get('/admin/users');
-        this.users = response.data;
+        const response = await apiClient.get('/admin/users')
+        this.users = response.data
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching users:', error)
       }
     },
     async fetchParkingSpots() {
       try {
-        const response = await apiClient.get('/admin/parking-spots');
-        this.parkingSpots = response.data;
+        const response = await apiClient.get('/admin/parking-spots')
+        this.parkingSpots = response.data
       } catch (error) {
-        console.error('Error fetching parking spots:', error);
+        console.error('Error fetching parking spots:', error)
       }
     },
     async fetchSummaryData() {
       try {
-        const response = await apiClient.get('/admin/summary-charts');
-        this.summaryData = response.data;
+        const response = await apiClient.get('/admin/summary-charts')
+        this.summaryData = response.data
       } catch (error) {
-        console.error('Error fetching summary data:', error);
+        console.error('Error fetching summary data:', error)
       }
     },
     async createParkingLot() {
       try {
-        await apiClient.post('/admin/parking-lots', this.currentLot);
-        this.closeModal();
-        await this.fetchData(); // Refresh data
+        await apiClient.post('/admin/parking-lots', this.currentLot)
+        this.closeModal()
+        this.fetchData()
+        toast.success('Parking lot created successfully!')
       } catch (error) {
-        console.error('Error creating parking lot:', error);
+        console.error('Error creating parking lot:', error)
+        toast.error('Failed to create parking lot.')
       }
     },
     editParkingLot(lot) {
-      this.isEditMode = true;
-      this.currentLot = { ...lot }; // Copy lot data to currentLot
-      this.showEditLotModal = true;
+      this.isEditMode = true
+      this.currentLot = { ...lot }
+      this.showEditLotModal = true
     },
     async updateParkingLot() {
       try {
-        await apiClient.put(`/admin/parking-lots/${this.currentLot.id}`, this.currentLot);
-        this.closeModal();
-        await this.fetchData(); // Refresh data
+        await apiClient.put(`/admin/parking-lots/${this.currentLot.id}`, this.currentLot)
+        this.closeModal()
+        this.fetchData()
+        toast.success('Parking lot updated successfully!')
       } catch (error) {
-        console.error('Error updating parking lot:', error);
+        console.error('Error updating parking lot:', error)
+        toast.error('Failed to update parking lot.')
       }
     },
     async deleteParkingLot(lotId) {
-      if (confirm('Are you sure you want to delete this parking lot?')) {
+      if (confirm('Are you sure?')) {
         try {
-          await apiClient.delete(`/admin/parking-lots/${lotId}`);
-          await this.fetchData(); // Refresh data
+          await apiClient.delete(`/admin/parking-lots/${lotId}`)
+          this.fetchData()
+          toast.success('Parking lot deleted successfully!')
         } catch (error) {
-          console.error('Error deleting parking lot:', error);
-          alert(error.response.data.message || 'Failed to delete parking lot.');
+          console.error('Error deleting parking lot:', error)
+          toast.error(error.response?.data?.message || 'Failed to delete parking lot.')
         }
       }
     },
     closeModal() {
-      this.showCreateLotModal = false;
-      this.showEditLotModal = false;
-      this.isEditMode = false;
-      this.currentLot = { // Reset form
+      this.showCreateLotModal = false
+      this.showEditLotModal = false
+      this.isEditMode = false
+      this.currentLot = {
         id: null,
         name: '',
         address: '',
         pincode: '',
         number_of_spots: 0,
-        price: 0.0
-      };
+        price: 0.0,
+      }
     },
     viewParkingLotDetails(lotId) {
-      this.$router.push({ name: 'admin-parking-lot-details', params: { lotId: lotId } });
-    }
-  }
-};
+      this.$router.push({ name: 'admin-parking-lot-details', params: { lotId } })
+    },
+  },
+}
 </script>
 
 <style scoped>
-.modal.show {
-  display: block;
+:root {
+  --primary-color: #6a5acd;
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
 }
-.modal-backdrop.show {
-  opacity: 0.5;
-}
-.chart-container {
-  position: relative;
-  height: 400px;
+
+.admin-dashboard {
+  padding: 2rem;
+  background: linear-gradient(120deg, #f0f2f5, #e6eaf0);
+  min-height: 100vh;
   width: 100%;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+.dashboard-header {
+  text-align: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  animation: slideFadeIn 0.6s ease-out;
+}
+
+.dashboard-header h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.dashboard-header p {
+  color: #555;
+  font-size: 1.2rem;
+}
+
+.dashboard-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  color: #555;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+}
+
+.tab-button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.stat-card {
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  animation: popIn 0.4s ease forwards;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.primary {
+  background: linear-gradient(135deg, #6a5acd, #836fff);
+}
+
+.stat-card.success {
+  background: linear-gradient(135deg, #28a745, #70e000);
+}
+
+.stat-card.warning {
+  background: linear-gradient(135deg, #ffc107, #f7b500);
+}
+
+.stat-card.info {
+  background: linear-gradient(135deg, #17a2b8, #00c2cb);
+}
+
+.chart-container {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  height: 350px;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.05);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.lot-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  animation: fadeInUp 0.6s ease;
+}
+
+.lot-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.table-responsive {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.5s ease;
+}
+
+.modal-content {
+  border-radius: 12px;
+  animation: zoomIn 0.3s ease;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5 !important;
+}
+
+.btn-close {
+  transition: transform 0.2s ease;
+}
+
+.btn-close:hover {
+  transform: scale(1.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideFadeIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>
