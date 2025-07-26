@@ -98,8 +98,23 @@ def update_parking_lot(lot_id):
 def delete_parking_lot(lot_id):
     lot = ParkingLot.query.get_or_404(lot_id)
 
-    if any(spot.status == 'O' for spot in lot.spots):
-        return jsonify({'message': 'Cannot delete a lot with occupied spots'}), 400
+    occupied_spots_info = []
+    for spot in lot.spots:
+        if spot.status == 'O':
+            reservation = Reservation.query.filter_by(spot_id=spot.id, leaving_timestamp=None).first()
+            if reservation:
+                occupied_spots_info.append({
+                    'spot_id': spot.id,
+                    'spot_number': spot.spot_number,
+                    'user_email': reservation.user.email,
+                    'parking_timestamp': reservation.parking_timestamp.isoformat()
+                })
+    
+    if occupied_spots_info:
+        return jsonify({
+            'message': 'Cannot delete a lot with occupied spots. Please ensure all spots are empty.',
+            'occupied_spots': occupied_spots_info
+        }), 400
 
     ParkingSpot.query.filter_by(lot_id=lot_id).delete()
     db.session.delete(lot)
