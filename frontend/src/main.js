@@ -23,6 +23,7 @@ import {
   FaBars,
   FaSignInAlt,
   FaSignOutAlt,
+  FaUserPlus,
 } from 'oh-vue-icons/icons'
 
 addIcons(
@@ -32,6 +33,7 @@ addIcons(
   CoUser,
   FaParking,
   FaRupeeSign,
+  FaUserPlus,
   FaUserCircle,
   FaInfoCircle,
   FaStar,
