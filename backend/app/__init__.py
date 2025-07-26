@@ -4,11 +4,8 @@ from flask_cors import CORS
 from .models import User, Role
 from flask_security import SQLAlchemyUserDatastore
 from .api.routes import register_api_routes
-from .celery_instance import init_celery
-
 
 def create_app():
-
     app = Flask(__name__)
     app.config.from_object("config.Config")
 
@@ -25,7 +22,5 @@ def create_app():
     security.init_app(app, user_datastore)
 
     register_api_routes(app)
-
-    init_celery(app)
 
     return app
