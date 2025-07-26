@@ -5,7 +5,6 @@ import json
 import uuid
 
 from ..models import ParkingLot, ParkingSpot, db, Reservation
-from ..celery_utils import export_user_parking_details_csv
 from ..extensions import redis_client
 
 user_bp = Blueprint("user", __name__)
@@ -102,18 +101,6 @@ def release_parking_spot(reservation_id):
             "message": "Parking spot released successfully",
             "parking_cost": reservation.parking_cost,
         }
-    )
-
-
-@user_bp.route("/export-parking-details", methods=["POST"])
-@auth_required()
-def export_parking_details():
-    export_user_parking_details_csv.delay(current_user.id)
-    return (
-        jsonify(
-            {"message": "CSV export initiated. You will be notified when it's ready."}
-        ),
-        202,
     )
 
 
@@ -217,7 +204,6 @@ def get_user_summary_charts_data():
 @user_bp.route("/payment-datails/<int:res_id>", methods=["GET"])
 @auth_required()
 def get_payment_data(res_id):
-    print(res_id)
 
     reservation = Reservation.query.filter_by(id=res_id).first()
 
