@@ -6,6 +6,7 @@ import uuid
 
 from ..models import ParkingLot, ParkingSpot, db, Reservation
 from ..extensions import redis_client
+from ..tasks import export_reservations_as_csv
 
 user_bp = Blueprint("user", __name__)
 
@@ -247,3 +248,9 @@ def process_payment():
         )
     else:
         return jsonify({"message": "Payment failed"}), 400
+
+@user_bp.route("/export-reservations", methods=["POST"])
+@auth_required()
+def export_reservations():
+    export_reservations_as_csv.delay(current_user.id)
+    return jsonify({"message": "Your reservation data is being exported and will be sent to your email."}), 202

@@ -4,9 +4,11 @@ from flask_security import Security
 from flask_wtf.csrf import CSRFProtect
 from flask_restful import Api
 import redis
+from flask_mailman import Mail
 
 db = SQLAlchemy()
 security = Security()
 csrf = CSRFProtect()
 api_ref = Api()
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+mail = Mail()

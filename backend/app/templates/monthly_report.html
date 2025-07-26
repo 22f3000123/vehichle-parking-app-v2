@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monthly Parking Report</title>
+</head>
+<body>
+    <h1>Monthly Parking Report</h1>
+    <p>Hi {{ user.username }},</p>
+    <p>Here is your parking activity report for the last month:</p>
+    <ul>
+        <li>Total Bookings: {{ total_bookings }}</li>
+        <li>Total Amount Spent: ${{ total_amount_spent }}</li>
+        <li>Most Used Parking Lot: {{ most_used_lot }}</li>
+    </ul>
+    <p>Thanks for using our service!</p>
+</body>
+</html>

@@ -13,7 +13,10 @@ dependencies = [
     "flask-security-too>=5.6.2",
     "flask-sqlalchemy>=3.1.1",
     "flask-wtf>=1.2.2",
-    "redis>=6.2.0",
+    "redis<=v5.2.1",
     "sqlalchemy>=2.0.41",
     "weasyprint>=65.1",
+    "flask-mailman>=1.0.0",
+    "importlib-metadata<5.0.0",
+    "python-dotenv>=1.1.1",
 ]

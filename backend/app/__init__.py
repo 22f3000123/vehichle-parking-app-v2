@@ -1,9 +1,12 @@
 from flask import Flask
-from .extensions import db, security
+from .extensions import db, security, mail
 from flask_cors import CORS
 from .models import User, Role
 from flask_security import SQLAlchemyUserDatastore
 from .api.routes import register_api_routes
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def create_app():
@@ -18,6 +21,7 @@ def create_app():
     )
 
     db.init_app(app)
+    mail.init_app(app)
 
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security.init_app(app, user_datastore)
