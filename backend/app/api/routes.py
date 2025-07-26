@@ -3,7 +3,6 @@ from .auth_routes import auth_bp
 from .admin_routes import admin_bp
 from .user_routes import user_bp
 
-
 def register_api_routes(app):
 
     # Register blueprints

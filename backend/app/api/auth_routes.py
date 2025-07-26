@@ -1,6 +1,12 @@
 from flask import Blueprint, request, jsonify
-from flask_security import hash_password, verify_password, login_user, logout_user, current_user
-from ..models import db, User, Role
+from flask_security import (
+    hash_password,
+    verify_password,
+    login_user,
+    logout_user,
+    current_user,
+)
+from ..models import db, User
 import re
 
 auth_bp = Blueprint("auth", __name__)
@@ -44,6 +50,7 @@ def register():
 
     return jsonify({"message": "User created successfully"}), 201
 
+
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -58,30 +65,42 @@ def login():
     if not user or not verify_password(password, user.password):
         return jsonify({"message": "Invalid credentials"}), 401
 
-    print(user)
-
     login_user(user)
 
-    print(current_user.is_authenticated)
+    return (
+        jsonify(
+            {
+                "message": "Login successful",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "roles": [role.name for role in user.roles],
+                },
+            }
+        ),
+        200,
+    )
 
-    # Return the user object with roles for frontend navigation
-    return jsonify({"message": "Login successful", "user": {"id": user.id, "email": user.email, "roles": [role.name for role in user.roles]}}), 200
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
     logout_user()
     return jsonify({"message": "Logout successful"}), 200
 
+
 @auth_bp.route("/me", methods=["GET"])
 def me():
-    print(request.headers, request.cookies)
-    print(current_user.is_authenticated)
     if current_user.is_authenticated:
-        return jsonify({
-            "id": current_user.id,
-            "name": f"{current_user.first_name} {current_user.last_name}",
-            "username": current_user.username,
-            "email": current_user.email,
-            "roles": [role.name for role in current_user.roles]
-        }), 200
+        return (
+            jsonify(
+                {
+                    "id": current_user.id,
+                    "name": f"{current_user.first_name} {current_user.last_name}",
+                    "username": current_user.username,
+                    "email": current_user.email,
+                    "roles": [role.name for role in current_user.roles],
+                }
+            ),
+            200,
+        )
     return jsonify({"message": "Not authenticated"}), 401
