@@ -34,7 +34,7 @@ class Config:
     MAIL_PORT = int(os.environ.get("MAIL_PORT") or 587)
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME") or "5e610a001@smtp-brevo.com"
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD") or "YOUR_BREVO_API_KEY"
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD") or "BREVO_API_KEY"
     MAIL_DEFAULT_SENDER = (
         os.environ.get("MAIL_DEFAULT_SENDER") or "duggalpiyush0@gmail.com"
     )
