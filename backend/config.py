@@ -13,13 +13,13 @@ class Config:
     SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS = True
     WTF_CSRF_CHECK_DEFAULT = False
     SECURITY_CSRF_PROTECT = False
-    CELERY_BROKER_URL = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
-    CELERY_IMPORTS = ("app.tasks",)
+    CELERY_broker_url = "redis://localhost:6379/0"
+    result_backend = "redis://localhost:6379/0"
+    imports = ("app.tasks",)
     CELERY_BEAT_SCHEDULE = {
         "send-daily-reminders": {
             "task": "app.tasks.send_daily_reminders",
-            "schedule": crontab(hour=20, minute=0),  # Every day at 8 PM
+            "schedule": crontab(minute="*"),  # run every 1 minute
         },
         "generate-monthly-reports": {
             "task": "app.tasks.generate_monthly_report",

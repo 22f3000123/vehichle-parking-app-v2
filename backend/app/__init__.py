@@ -5,6 +5,7 @@ from .models import User, Role
 from flask_security import SQLAlchemyUserDatastore
 from .api.routes import register_api_routes
 from dotenv import load_dotenv
+from celery_app import make_celery
 
 load_dotenv()
 
@@ -12,6 +13,10 @@ load_dotenv()
 def create_app():
     app = Flask(__name__)
     app.config.from_object("config.Config")
+
+    celery = make_celery(app)
+
+    celery.set_default()
 
     CORS(
         app,
@@ -28,4 +33,4 @@ def create_app():
 
     register_api_routes(app)
 
-    return app
+    return app, celery
