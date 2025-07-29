@@ -224,7 +224,10 @@ export default {
       try {
         const response = await apiClient.get('/user/reservations')
 
-        console.log(response.data)
+        if (response.data.length === 0) {
+          this.userReservations = []
+          return
+        }
 
         const indexOfNonRelease = response.data.findIndex((res) => res.leaving_timestamp === null)
 
@@ -233,7 +236,6 @@ export default {
         response.data.unshift(el[0])
 
         this.userReservations = response.data
-        console.log(this.userReservations)
       } catch (error) {
         console.error('Error fetching user reservations:', error)
         this.userReservations = []
