@@ -72,10 +72,10 @@ export default {
       cardName: '',
       expiryDate: '',
       cvv: '',
-      amount: 0,
+      amount: this.parkingCost || 0,
       paymentMessage: '',
       paymentSuccess: false,
-      parkingTime: 0
+      parkingTime: 0,
     }
   },
 
