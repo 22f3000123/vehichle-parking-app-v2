@@ -6,17 +6,32 @@
     </header>
 
     <div class="dashboard-tabs">
-      <button class="tab-button" :class="{ active: activeTab === 'summary' }" @click="activeTab = 'summary'">
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'summary' }"
+        @click="activeTab = 'summary'"
+      >
         <v-icon name="co-chart" /> Summary
       </button>
-      <button class="tab-button" :class="{ active: activeTab === 'parking-lots' }" @click="activeTab = 'parking-lots'">
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'parking-lots' }"
+        @click="activeTab = 'parking-lots'"
+      >
         <v-icon name="fa-parking" /> Parking Lots
       </button>
-      <button class="tab-button" :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'users' }"
+        @click="activeTab = 'users'"
+      >
         <v-icon name="fa-users" /> Users
       </button>
-      <button class="tab-button" :class="{ active: activeTab === 'parking-spots' }"
-        @click="activeTab = 'parking-spots'">
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'parking-spots' }"
+        @click="activeTab = 'parking-spots'"
+      >
         <v-icon name="fa-map-marker-alt" /> Parking Spots
       </button>
     </div>
@@ -54,12 +69,20 @@
           <!-- Charts -->
           <div class="col-md-8">
             <div class="chart-container">
-              <Line v-if="dailyReservationsChartData" :data="dailyReservationsChartData" :options="lineChartOptions" />
+              <Line
+                v-if="dailyReservationsChartData"
+                :data="dailyReservationsChartData"
+                :options="lineChartOptions"
+              />
             </div>
           </div>
           <div class="col-md-4">
             <div class="chart-container">
-              <Pie v-if="spotDistributionChartData" :data="spotDistributionChartData" :options="chartOptions" />
+              <Pie
+                v-if="spotDistributionChartData"
+                :data="spotDistributionChartData"
+                :options="chartOptions"
+              />
             </div>
           </div>
         </div>
@@ -85,7 +108,10 @@
                 <button class="btn btn-sm btn-danger" @click="deleteParkingLot(lot.id)">
                   Delete
                 </button>
-                <button class="btn btn-sm btn-secondary ms-2" @click="viewParkingLotDetails(lot.id)">
+                <button
+                  class="btn btn-sm btn-secondary ms-2"
+                  @click="viewParkingLotDetails(lot.id)"
+                >
                   View
                 </button>
               </div>
@@ -116,7 +142,7 @@
                 <td>
                   <span class="badge" :class="user.active ? 'bg-success' : 'bg-danger'">{{
                     user.active ? 'Active' : 'Inactive'
-                    }}</span>
+                  }}</span>
                 </td>
               </tr>
             </tbody>
@@ -146,7 +172,7 @@
                 <td>
                   <span class="badge" :class="spot.status === 'A' ? 'bg-success' : 'bg-warning'">{{
                     spot.status === 'A' ? 'Available' : 'Occupied'
-                    }}</span>
+                  }}</span>
                 </td>
                 <td>{{ spot.reserved_by ? spot.reserved_by.email : 'N/A' }}</td>
                 <td>
@@ -164,50 +190,101 @@
     </div>
 
     <!-- Modal -->
-    <div class="modal fade" :class="{ show: showCreateLotModal || showEditLotModal }" tabindex="-1"
-      :style="{ display: showCreateLotModal || showEditLotModal ? 'block' : 'none' }">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
+    <div
+      class="modal fade custom-modal"
+      :class="{ show: showCreateLotModal || showEditLotModal }"
+      tabindex="-1"
+      :style="{ display: showCreateLotModal || showEditLotModal ? 'block' : 'none' }"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal-content">
+          <!-- Header -->
+          <div class="modal-header custom-modal-header">
             <h5 class="modal-title">
               {{ isEditMode ? 'Edit Parking Lot' : 'Create New Parking Lot' }}
             </h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
-          <div class="modal-body">
+
+          <!-- Body -->
+          <div class="modal-body custom-modal-body">
             <form @submit.prevent="isEditMode ? updateParkingLot() : createParkingLot()">
-              <div class="mb-3">
-                <label for="lotName" class="form-label">Name</label>
-                <input type="text" class="form-control" id="lotName" v-model="currentLot.name" required />
+              <div class="form-group-custom">
+                <label for="lotName" class="form-label-custom">Name</label>
+                <input
+                  type="text"
+                  class="form-control-custom"
+                  id="lotName"
+                  v-model="currentLot.name"
+                  placeholder="Enter parking lot name"
+                  required
+                />
               </div>
-              <div class="mb-3">
-                <label for="lotAddress" class="form-label">Address</label>
-                <input type="text" class="form-control" id="lotAddress" v-model="currentLot.address" required />
+
+              <div class="form-group-custom">
+                <label for="lotAddress" class="form-label-custom">Address</label>
+                <input
+                  type="text"
+                  class="form-control-custom"
+                  id="lotAddress"
+                  v-model="currentLot.address"
+                  placeholder="Enter address"
+                  required
+                />
               </div>
-              <div class="mb-3">
-                <label for="lotPincode" class="form-label">Pincode</label>
-                <input type="text" class="form-control" id="lotPincode" v-model="currentLot.pincode" required />
+
+              <div class="form-group-custom">
+                <label for="lotPincode" class="form-label-custom">Pincode</label>
+                <input
+                  type="text"
+                  class="form-control-custom"
+                  id="lotPincode"
+                  v-model="currentLot.pincode"
+                  placeholder="Enter pincode"
+                  required
+                />
               </div>
-              <div class="mb-3" v-if="!isEditMode">
-                <label for="lotSpots" class="form-label">Number of Spots</label>
-                <input type="number" class="form-control" id="lotSpots" v-model.number="currentLot.number_of_spots"
-                  required min="1" />
+
+              <div class="form-group-custom" v-if="!isEditMode">
+                <label for="lotSpots" class="form-label-custom">Number of Spots</label>
+                <input
+                  type="number"
+                  class="form-control-custom"
+                  id="lotSpots"
+                  v-model.number="currentLot.number_of_spots"
+                  placeholder="Enter number of spots"
+                  required
+                  min="1"
+                />
               </div>
-              <div class="mb-3">
-                <label for="lotPrice" class="form-label">Price per Hour</label>
-                <input type="number" class="form-control" id="lotPrice" v-model.number="currentLot.price" required
-                  step="0.01" min="0" />
+
+              <div class="form-group-custom">
+                <label for="lotPrice" class="form-label-custom">Price per Hour</label>
+                <input
+                  type="number"
+                  class="form-control-custom"
+                  id="lotPrice"
+                  v-model.number="currentLot.price"
+                  placeholder="Enter price per hour"
+                  required
+                  step="0.01"
+                  min="0"
+                />
               </div>
-              <button type="submit" class="btn btn-primary">
-                {{ isEditMode ? 'Update' : 'Create' }}
+
+              <button type="submit" class="btn-login mt-2 w-100">
+                <span>{{ isEditMode ? 'Update' : 'Create' }}</span>
               </button>
             </form>
           </div>
         </div>
       </div>
     </div>
-    <div class="modal-backdrop fade" :class="{ show: showCreateLotModal || showEditLotModal }"
-      :style="{ display: showCreateLotModal || showEditLotModal ? 'block' : 'none' }"></div>
+    <div
+      class="modal-backdrop fade"
+      :class="{ show: showCreateLotModal || showEditLotModal }"
+      :style="{ display: showCreateLotModal || showEditLotModal ? 'block' : 'none' }"
+    ></div>
   </div>
 </template>
 
@@ -630,6 +707,94 @@ export default {
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+.custom-modal .modal-dialog {
+  max-width: 500px;
+}
+
+.custom-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.15),
+    0 10px 10px -5px rgba(0, 0, 0, 0.05);
+}
+
+.custom-modal-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.custom-modal-header h5 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.custom-modal-body {
+  padding: 1.8rem;
+}
+
+/* Reuse login form styles */
+.form-group-custom {
+  margin-bottom: 1.2rem;
+  animation: slideUp 0.6s ease forwards;
+}
+
+.form-label-custom {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #374151;
+}
+
+.form-control-custom {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  background: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.form-control-custom:focus {
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  outline: none;
+}
+
+/* Button reuse */
+.btn-login {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>
