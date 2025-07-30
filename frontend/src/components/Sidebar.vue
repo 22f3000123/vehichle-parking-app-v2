@@ -46,7 +46,7 @@ import apiClient from '../services/api'
 
 const authStore = useAuthStore()
 const router = useRouter()
-const isOpen = ref(true)
+const isOpen = ref(true) 
 
 const emit = defineEmits(['update:isOpen'])
 
@@ -69,48 +69,81 @@ const logout = async () => {
 
 <style scoped>
 .sidebar {
+  --sidebar-width: 250px;
   width: var(--sidebar-width);
-  background-color: #2c3e50;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 1rem;
-  transition: transform 0.3s ease;
+  padding: 1rem 0;
+  transition:
+    transform 0.4s ease,
+    box-shadow 0.4s ease;
   transform: translateX(-100%);
   position: fixed;
   height: 100%;
   z-index: 1000;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar.open {
   transform: translateX(0);
 }
 
+/* Sidebar Toggle Button */
 .sidebar-toggle {
   position: absolute;
-  top: 1rem;
-  right: -2rem;
-  background-color: #2c3e50;
+  top: 1.5rem;
+  right: -3rem;
+  background-color: #764ba2;
   color: white;
-  padding: 0.5rem;
-  border-radius: 0 5px 5px 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0 8px 8px 0;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
+.sidebar-toggle:hover {
+  background-color: #667eea;
+}
+
+/* Sidebar Header */
 .sidebar-header {
-  margin-bottom: 2rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1.5rem;
 }
 
 .sidebar-brand {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.8rem;
+  font-weight: 700;
   color: white;
   text-decoration: none;
   display: flex;
   align-items: center;
+  letter-spacing: 0.5px;
 }
 
+.sidebar-brand .v-icon {
+  font-size: 1.8rem;
+  margin-right: 0.75rem;
+}
+
+/* Sidebar Navigation */
 .sidebar-nav {
   list-style: none;
-  padding: 0;
+  padding: 0 1rem;
+  margin: 0;
+}
+
+.nav-item {
+  margin-bottom: 0.75rem;
 }
 
 .nav-link {
@@ -118,12 +151,43 @@ const logout = async () => {
   text-decoration: none;
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
+  padding: 0.9rem 1.2rem;
+  border-radius: 10px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease,
+    box-shadow 0.3s ease;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
 }
 
 .nav-link:hover {
-  background-color: #34495e;
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link .v-icon {
+  margin-right: 0.8rem;
+  font-size: 1.1rem;
+}
+
+.router-link-exact-active {
+  background: rgba(255, 255, 255, 0.25);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 #fff;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
 }
 </style>
