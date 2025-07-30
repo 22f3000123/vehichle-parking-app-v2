@@ -161,7 +161,7 @@ export default {
   data() {
     return {
       authStore: useAuthStore(),
-      activeTab: 'summary',
+      activeTab: 'parking-lots',
       parkingLots: [],
       userReservations: [],
       summaryData: null,
